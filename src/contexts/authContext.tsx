@@ -1,33 +1,92 @@
-import { createContext, ReactNode, useEffect, useState } from 'react'
+import { createContext, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { useLoading } from '@siakit/loading'
+import firebase from '../api/api'
 
-export const AuthContext = createContext({})
+type User = {
+  uid: any
+  nome?: string
+  avatarUrl?: string | null
+  email?: any
+  role?: string
+}
 
-function AuthProvider(children: ReactNode) {
-  const [user, setUser] = useState(null)
-  const { setLoading } = useLoading()
+type AuthContextData = {
+  isSigned?: boolean
+  user?: User
+  signIn: (data: any) => Promise<void>
+}
 
-  useEffect(() => {
-    function loadStorage() {
-      const storageUser = localStorage.getItem('@manutencao')
+type LoginProps = {
+  email: string
+  password: string
+}
 
-      if (storageUser) {
-        setUser(JSON.parse(storageUser))
-      }
+export const AuthContext = createContext({} as AuthContextData)
+
+function AuthProvider({ children }: any) {
+  const navigate = useNavigate()
+
+  // useEffect(() => {
+  //   function loadStorage() {
+  //     const storageUser = localStorage.getItem('@manutencao')
+
+  //     if (storageUser) {
+  //       setUser(JSON.parse(storageUser))
+  //     }
+  //   }
+  //   loadStorage()
+  // }, [])
+
+  const [user, setUser] = useState<User | undefined>(() => {
+    const persistedUser = localStorage.getItem('@manutencao')
+
+    if (persistedUser) {
+      return JSON.parse(persistedUser)
     }
-    loadStorage()
-  }, [])
 
-  async function signIn(data) {
-    console.log('clicou')
+    return null
+  })
+
+  async function signIn(data: LoginProps) {
+    const { email, password } = data
+
+    try {
+      await firebase
+        .auth()
+        .signInWithEmailAndPassword(email, password)
+        .then(async (value) => {
+          const uid = value.user?.uid
+
+          const userProfile = await firebase
+            .firestore()
+            .collection('users')
+            .doc(uid)
+            .get()
+
+          const response = {
+            uid,
+            nome: userProfile.data()?.nome,
+            avatarUrl: userProfile.data()?.avatarUrl,
+            email: value.user?.email,
+            role: userProfile.data()?.role,
+          }
+
+          setUser(response)
+          localStorage.setItem('@manutencao', JSON.stringify(response))
+        })
+      navigate('/')
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   return (
     <AuthContext.Provider
       value={{
-        signed: !!user,
+        isSigned: !!user,
         user,
+        signIn,
       }}
     >
       {children}

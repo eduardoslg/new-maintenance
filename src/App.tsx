@@ -1,24 +1,23 @@
-import { BrowserRouter } from 'react-router-dom'
-
 import { Provider } from '@siakit/core'
 import { DialogProvider } from '@siakit/dialog'
 import { LoadingProvider } from '@siakit/loading'
 import { ToastProvider } from '@siakit/toast'
 
-import { AppRoutes } from './routes/AppRoutes'
+import AuthProvider from './contexts/authContext'
+import { Routes } from './routes'
 
 export function App() {
   return (
-    <BrowserRouter>
+    <AuthProvider>
       <Provider>
         <DialogProvider>
           <ToastProvider>
             <LoadingProvider>
-              <AppRoutes />
+              <Routes />
             </LoadingProvider>
           </ToastProvider>
         </DialogProvider>
       </Provider>
-    </BrowserRouter>
+    </AuthProvider>
   )
 }
