@@ -19,7 +19,7 @@ type OptionType = {
 
 export function Home() {
   const [enterpriseSelected, setEnterpriseSelected] = useState<OptionType[]>([])
-  const [teste, setTeste] = useState(0)
+  const [teste, setTeste] = useState('')
   const [notes, setNotes] = useState([])
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export function Home() {
     setNotes(lista)
   }
 
-  console.log(notes)
+  console.log(teste)
 
   return (
     <>
@@ -110,7 +110,7 @@ export function Home() {
           <Flex flex>
             <Form
               onSubmit={() => undefined}
-              initialData={{ enterprise: teste }}
+              initialData={{ enterprise: 'Bosch' }}
             >
               <Flex width={250}>
                 <Select
@@ -124,7 +124,6 @@ export function Home() {
                     }
                   })}
                   onChange={(value: any) => {
-                    console.log(value)
                     setTeste(value.value)
                   }}
                 />
