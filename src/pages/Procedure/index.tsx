@@ -29,37 +29,39 @@ import firebase from '../../api/api'
 import { AuthContext } from '../../contexts/authContext'
 
 type OptionType = {
-  nomeFantasia: string
+  modelo: string
   id: string | number
 }
 
-type NotesProps = {
-  clientId: string
+type ProcedureProps = {
+  equipmentId: string
   assunto: string
   descricao: string
-  cliente: string
+  equipment: string
   id?: string
 }
 
-export function Home() {
+export function Procedure() {
   const { user } = useContext(AuthContext)
   const { setLoading } = useLoading()
 
   const formRef = useRef<FormHandles>(null)
-  const clientFormRef = useRef<FormHandles>(null)
+  const equipmentFormRef = useRef<FormHandles>(null)
   const { addToast } = useToast()
   const { addDialog } = useDialog()
 
-  const [enterpriseSelected, setEnterpriseSelected] = useState<OptionType[]>([])
+  const [equipmentSelected, setEquipmentSelected] = useState<OptionType[]>([])
   const [teste, setTeste] = useState('')
-  const [notes, setNotes] = useState([])
-  const [client, setClient] = useState('')
-  const [dataToUpdate, setDataToUpdate] = useState<NotesProps>({} as NotesProps)
+  const [procedures, setProcedures] = useState([])
+  const [equipment, setEquipment] = useState('')
+  const [dataToUpdate, setDataToUpdate] = useState<ProcedureProps>(
+    {} as ProcedureProps,
+  )
 
-  const [modalNotesVisible, setModalNotesVisible] = useState(false)
+  const [modalProceduresVisible, setModalProceduresVisible] = useState(false)
 
-  const createNoteFormSchema = yup.object({
-    clientId: yup.string().when('tste', {
+  const createProcedureFormSchema = yup.object({
+    equipmentId: yup.string().when('tste', {
       is: dataToUpdate.id,
       then: () => yup.string().required('Campo obrigatório'),
     }),
@@ -68,10 +70,10 @@ export function Home() {
   })
 
   useEffect(() => {
-    async function loadCustomers() {
+    async function loadEquipments() {
       await firebase
         .firestore()
-        .collection('customers')
+        .collection('equipment')
         .get()
         .then((snapshot: any) => {
           const lista: any = []
@@ -79,36 +81,35 @@ export function Home() {
           snapshot.forEach((doc: any) => {
             lista.push({
               id: doc.id,
-              nomeFantasia: doc.data().nomeFantasia,
+              modelo: doc.data().modelo,
             })
           })
 
           if (lista.length === 0) {
-            console.log('NENHUMA EMPRESA ENCONTRADA')
-            setEnterpriseSelected([{ id: '1', nomeFantasia: 'FREELA' }] as any)
+            setEquipmentSelected([{ id: '1', modelo: 'Teste' }] as any)
             return
           }
 
-          setEnterpriseSelected(lista as any)
+          setEquipmentSelected(lista as any)
         })
         .catch((error: any) => {
           console.log('DEU ALGUM ERRO!', error)
-          setEnterpriseSelected([{ id: '1', nomeFantasia: '' }] as any)
+          setEquipmentSelected([{ id: '1', modelo: '' }] as any)
         })
     }
 
-    loadCustomers()
+    loadEquipments()
   }, [])
 
   useEffect(() => {
-    loadNotes()
-  }, [teste, enterpriseSelected])
+    loadProcedures()
+  }, [teste, equipmentSelected])
 
-  async function loadNotes() {
+  async function loadProcedures() {
     const listRef = firebase
       .firestore()
-      .collection('notes')
-      .where('clienteId', '==', enterpriseSelected[Number(teste)].id)
+      .collection('procedure')
+      .where('equipmentId', '==', equipmentSelected[Number(teste)].id)
 
     await listRef
       .get()
@@ -128,33 +129,32 @@ export function Home() {
         id: doc.id,
         assunto: doc.data().assunto,
         descricao: doc.data().descricao,
-        cliente: doc.data().cliente,
-        clienteId: doc.data().clienteId,
+        equipment: doc.data().equipment,
+        equipmentId: doc.data().equipmentId,
         created: doc.data().created,
         createdFormated: format(doc.data().created.toDate(), 'dd/MM/yyyy'),
-        status: doc.data().status,
         usuario: doc.data().userName,
       })
     })
-    setNotes(lista)
+    setProcedures(lista)
   }
 
-  async function handleCreateObs(data: NotesProps) {
-    const { assunto, descricao, clientId } = data
+  async function handleCreateObs(data: ProcedureProps) {
+    const { assunto, descricao, equipmentId } = data
 
     try {
       setLoading(true)
 
       formRef.current?.setErrors({})
 
-      await createNoteFormSchema.validate(data, {
+      await createProcedureFormSchema.validate(data, {
         abortEarly: false,
       })
 
       if (dataToUpdate.id) {
         await firebase
           .firestore()
-          .collection('notes')
+          .collection('procedure')
           .doc(dataToUpdate.id)
           .update({
             descricao,
@@ -163,34 +163,34 @@ export function Home() {
             userName: user?.nome,
           })
 
-        loadNotes()
+        loadProcedures()
         handleCloseModal()
 
         addToast({
           type: 'success',
           title: 'Sucesso',
           duration: 3000,
-          description: 'Observação editada com sucesso!',
+          description: 'Procedimento editado com sucesso!',
         })
       } else {
-        await firebase.firestore().collection('notes').add({
+        await firebase.firestore().collection('procedure').add({
           created: new Date(),
-          cliente: client,
-          clienteId: clientId,
+          equipment,
+          equipmentId,
           assunto,
           descricao,
           userId: user?.uid,
           userName: user?.nome,
         })
 
-        loadNotes()
+        loadProcedures()
         handleCloseModal()
 
         addToast({
           type: 'success',
           title: 'Sucesso',
           duration: 3000,
-          description: 'Observação criada com sucesso!',
+          description: 'Procedimento criado com sucesso!',
         })
       }
     } catch (err) {
@@ -206,7 +206,7 @@ export function Home() {
   async function handleDelete(item: any) {
     await firebase
       .firestore()
-      .collection('notes')
+      .collection('procedure')
       .doc(item.id)
       .delete()
       .then(() => {
@@ -215,7 +215,7 @@ export function Home() {
           type: 'success',
           description: 'Excluído com sucesso!',
         })
-        loadNotes()
+        loadProcedures()
       })
   }
 
@@ -223,7 +223,7 @@ export function Home() {
     addDialog({
       title: 'Excluir',
       type: 'danger',
-      description: 'Você tem certeza de que quer excluir essa observação?',
+      description: 'Você tem certeza de que quer excluir esse procedimento?',
       actionText: 'Sim',
       cancelText: 'Não',
       onAction: () => handleDelete(item),
@@ -231,49 +231,36 @@ export function Home() {
   }
 
   function handleCloseModal() {
-    setDataToUpdate({} as NotesProps)
-    setModalNotesVisible(false)
+    setDataToUpdate({} as ProcedureProps)
+    setModalProceduresVisible(false)
   }
 
   return (
     <>
-      <Modal open={modalNotesVisible} onOpenChange={handleCloseModal}>
+      <Modal open={modalProceduresVisible} onOpenChange={handleCloseModal}>
         <ModalContent
-          title={
-            dataToUpdate.id
-              ? `Editar observação (${dataToUpdate.cliente})`
-              : 'Nova Observação'
-          }
+          title={dataToUpdate.id ? `Editar Procedimento` : 'Novo Procedimento'}
         >
           <Form
             overflow
             ref={formRef}
             onSubmit={handleCreateObs}
-            initialData={
-              dataToUpdate.id
-                ? {
-                    ...dataToUpdate,
-                    clientId: 0,
-                  }
-                : {
-                    clientId: client,
-                  }
-            }
+            initialData={dataToUpdate}
           >
             <Flex overflow direction="column" padding gap={8}>
               {!dataToUpdate.id && (
                 <Select
-                  label="Empresa"
-                  name="clientId"
-                  placeholder="Empresa"
-                  options={enterpriseSelected.map((item: any) => {
+                  label="Equipamento"
+                  name="equipmentId"
+                  placeholder="Equipamento"
+                  options={equipmentSelected.map((item: any) => {
                     return {
                       value: item.id,
-                      label: item.nomeFantasia,
+                      label: item.modelo,
                     }
                   })}
                   onChange={(value: any) => {
-                    setClient(value.label)
+                    setEquipment(value.label)
                   }}
                   disabled={!!dataToUpdate.id}
                 />
@@ -284,7 +271,7 @@ export function Home() {
               <TextAreaInput
                 label="Descrição"
                 name="descricao"
-                placeholder="Descreva a informação aqui"
+                placeholder="Descreva o procedimento aqui"
               />
             </Flex>
 
@@ -302,7 +289,7 @@ export function Home() {
         <Flex flex gap direction="column">
           <Flex gap align="center">
             <Info size={32} />
-            <Heading>Observações</Heading>
+            <Heading>Procedimentos</Heading>
           </Flex>
 
           <DropdownSeparator />
@@ -310,18 +297,18 @@ export function Home() {
           <Flex flex direction="column" gap>
             <Form
               onSubmit={() => undefined}
-              ref={clientFormRef}
+              ref={equipmentFormRef}
               initialData={{ enterprise: 1 }}
             >
               <Flex width={250}>
                 <Select
-                  label="Empresa"
-                  name="enterprise"
-                  placeholder="Empresa"
-                  options={enterpriseSelected.map((item, index) => {
+                  label="Equipamento"
+                  name="equipment"
+                  placeholder="Equipamento"
+                  options={equipmentSelected.map((item, index) => {
                     return {
                       value: index,
-                      label: item.nomeFantasia,
+                      label: item.modelo,
                     }
                   })}
                   onChange={(value: any) => {
@@ -332,14 +319,14 @@ export function Home() {
             </Form>
 
             <Flex>
-              <Button onClick={() => setModalNotesVisible(true)}>
-                Nova Observação
+              <Button onClick={() => setModalProceduresVisible(true)}>
+                Novo Procedimento
               </Button>
             </Flex>
           </Flex>
         </Flex>
 
-        {!notes.length && (
+        {!procedures.length && (
           <Flex
             flex
             align="center"
@@ -351,16 +338,16 @@ export function Home() {
               Não há dados.
             </Heading>
             <Heading size="sm" weight="medium">
-              Selecione alguma empresa para buscar.
+              Selecione algum equipamento para buscar.
             </Heading>
           </Flex>
         )}
 
-        {!!notes.length && (
+        {!!procedures.length && (
           <Flex overflow>
             <Card overflow flex padding>
               <Accordion type="multiple">
-                {notes.map((item: any, index: any) => {
+                {procedures.map((item: any, index: any) => {
                   return (
                     <AccordionItem
                       key={item.id}
@@ -378,7 +365,7 @@ export function Home() {
                               onClick={(event) => {
                                 event.stopPropagation()
                                 setDataToUpdate(item)
-                                setModalNotesVisible(true)
+                                setModalProceduresVisible(true)
                               }}
                             >
                               Editar

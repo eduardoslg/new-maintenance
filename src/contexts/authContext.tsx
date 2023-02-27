@@ -1,6 +1,8 @@
 import { createContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { useLoading } from '@siakit/loading'
+
 import firebase from '../api/api'
 
 type User = {
@@ -15,6 +17,7 @@ type AuthContextData = {
   isSigned?: boolean
   user?: User
   signIn: (data: any) => Promise<void>
+  signOut: () => Promise<void>
 }
 
 type LoginProps = {
@@ -26,17 +29,7 @@ export const AuthContext = createContext({} as AuthContextData)
 
 function AuthProvider({ children }: any) {
   const navigate = useNavigate()
-
-  // useEffect(() => {
-  //   function loadStorage() {
-  //     const storageUser = localStorage.getItem('@manutencao')
-
-  //     if (storageUser) {
-  //       setUser(JSON.parse(storageUser))
-  //     }
-  //   }
-  //   loadStorage()
-  // }, [])
+  const { setLoading } = useLoading()
 
   const [user, setUser] = useState<User | undefined>(() => {
     const persistedUser = localStorage.getItem('@manutencao')
@@ -52,6 +45,8 @@ function AuthProvider({ children }: any) {
     const { email, password } = data
 
     try {
+      setLoading(true)
+
       await firebase
         .auth()
         .signInWithEmailAndPassword(email, password)
@@ -78,6 +73,22 @@ function AuthProvider({ children }: any) {
       navigate('/')
     } catch (err) {
       console.log(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function signOut() {
+    try {
+      setLoading(true)
+
+      await firebase.auth().signOut()
+      localStorage.removeItem('@manutencao')
+      setUser(undefined)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -87,6 +98,7 @@ function AuthProvider({ children }: any) {
         isSigned: !!user,
         user,
         signIn,
+        signOut,
       }}
     >
       {children}

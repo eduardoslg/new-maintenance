@@ -20,7 +20,7 @@ import { AuthContext } from '../../contexts/authContext'
 import { Sidebar } from './Sidebar'
 
 export function DefaultLayout() {
-  const { user } = useContext(AuthContext)
+  const { user, signOut } = useContext(AuthContext)
 
   const navigate = useNavigate()
 
@@ -59,14 +59,14 @@ export function DefaultLayout() {
                 </Flex>
               </DropdownTrigger>
               <DropdownContent>
-                <DropdownLabel>Configuraçōes</DropdownLabel>
+                {/* <DropdownLabel>Configuraçōes</DropdownLabel>
 
                 <DropdownItem onClick={() => navigate('/profile')}>
                   Meu perfil
-                </DropdownItem>
-                <DropdownSeparator />
+                </DropdownItem> */}
                 <DropdownLabel>Ações</DropdownLabel>
-                <DropdownItem type="danger" onClick={() => undefined}>
+                <DropdownSeparator />
+                <DropdownItem type="danger" onClick={() => signOut()}>
                   Sair
                 </DropdownItem>
               </DropdownContent>

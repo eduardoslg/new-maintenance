@@ -3,11 +3,19 @@ import { Navigate, Outlet } from 'react-router-dom'
 
 import { AuthContext } from '../contexts/authContext'
 
-export function Protected() {
-  const { user } = useContext(AuthContext)
+type ProtectedProps = {
+  isProtected: boolean
+}
 
-  if (!user?.uid) {
+export function Protected({ isProtected }: ProtectedProps) {
+  const { isSigned } = useContext(AuthContext)
+
+  if (!isSigned && isProtected) {
     return <Navigate to="/sign-in" />
+  }
+
+  if (isSigned && !isProtected) {
+    return <Navigate to="/" />
   }
 
   return <Outlet />

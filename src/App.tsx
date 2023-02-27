@@ -4,20 +4,20 @@ import { LoadingProvider } from '@siakit/loading'
 import { ToastProvider } from '@siakit/toast'
 
 import AuthProvider from './contexts/authContext'
-import { Routes } from './routes'
+import { AppRoutes } from './routes/AppRoutes'
 
 export function App() {
   return (
-    <AuthProvider>
-      <Provider>
-        <DialogProvider>
-          <ToastProvider>
-            <LoadingProvider>
-              <Routes />
-            </LoadingProvider>
-          </ToastProvider>
-        </DialogProvider>
-      </Provider>
-    </AuthProvider>
+    <LoadingProvider>
+      <AuthProvider>
+        <Provider>
+          <DialogProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </DialogProvider>
+        </Provider>
+      </AuthProvider>
+    </LoadingProvider>
   )
 }

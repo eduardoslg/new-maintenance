@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { UserCircle } from 'phosphor-react'
+import { DeviceMobile } from 'phosphor-react'
 import * as yup from 'yup'
 
 import { Button } from '@siakit/button'
@@ -12,7 +12,6 @@ import {
   Form,
   FormHandles,
   getValidationErrors,
-  MaskInput,
   TextInput,
 } from '@siakit/form-unform'
 import { Heading } from '@siakit/heading'
@@ -24,79 +23,77 @@ import { useToast } from '@siakit/toast'
 
 import firebase from '../../api/api'
 
-type ClientProps = {
-  nomeFantasia: string
-  cnpj: string
-  endereco: string
+type EquipmentProps = {
+  modelo: string
+  nome: string
   id: string
 }
 
-const createClientFormSchema = yup.object({
-  nomeFantasia: yup.string().required('Campo obrigatório'),
+const createEquipmentFormSchema = yup.object({
+  modelo: yup.string().required('Campo obrigatório'),
+  nome: yup.string().required('Campo obrigatório'),
 })
 
-export function Clients() {
+export function Equipment() {
   const formRef = useRef<FormHandles>(null)
   const { addToast } = useToast()
   const { addDialog } = useDialog()
   const { setLoading } = useLoading()
 
-  const [modalCreateClientVisible, setModalCreateClientVisible] =
+  const [modalCreateEquipmentVisible, setModalCreateEquipmentVisible] =
     useState(false)
-  const [clients, setClients] = useState([])
-  const [dataToUpdate, setDataToUpdate] = useState<ClientProps>(
-    {} as ClientProps,
+  const [equipaments, setEquipaments] = useState([])
+  const [dataToUpdate, setDataToUpdate] = useState<EquipmentProps>(
+    {} as EquipmentProps,
   )
 
-  async function handleCreateClient(data: ClientProps) {
-    const { cnpj, endereco, nomeFantasia } = data
+  async function handleCreateEquipment(data: EquipmentProps) {
+    const { modelo, nome } = data
 
     setLoading(true)
 
     try {
       formRef.current?.setErrors({})
 
-      await createClientFormSchema.validate(data, {
+      await createEquipmentFormSchema.validate(data, {
         abortEarly: false,
       })
 
       if (dataToUpdate.id) {
         await firebase
           .firestore()
-          .collection('customers')
+          .collection('equipment')
           .doc(dataToUpdate.id)
           .update({
-            nomeFantasia: data.nomeFantasia,
-            cnpj: data.cnpj,
-            endereco: data.endereco,
+            modelo: data.modelo,
+            nome: data.nome,
           })
           .then(() => console.log('status 200'))
           .finally(() => setLoading(false))
 
-        loadCustomers()
+        loadEquipments()
         handleCloseModal()
-        setDataToUpdate({} as ClientProps)
+        setDataToUpdate({} as EquipmentProps)
 
         addToast({
           type: 'success',
           title: 'Sucesso!',
-          description: 'Empresa atualizada!',
+          description: 'Equipamento atualizado!',
         })
       } else {
-        await firebase.firestore().collection('customers').add({
-          nomeFantasia,
-          cnpj,
-          endereco,
+        await firebase.firestore().collection('equipment').add({
+          modelo,
+          nome,
         })
 
-        loadCustomers()
+        loadEquipments()
         handleCloseModal()
-        setDataToUpdate({} as ClientProps)
+        setDataToUpdate({} as EquipmentProps)
 
         addToast({
           type: 'success',
           title: 'Sucesso!',
-          description: 'Empresa cadastrada!',
+          description: 'Equipamento cadastrado!',
         })
       }
     } catch (err) {
@@ -110,10 +107,10 @@ export function Clients() {
     }
   }
 
-  async function loadCustomers() {
+  async function loadEquipments() {
     await firebase
       .firestore()
-      .collection('customers')
+      .collection('equipment')
       .get()
       .then((snapshot: any) => {
         const lista: any = []
@@ -121,13 +118,12 @@ export function Clients() {
         snapshot.forEach((doc: any) => {
           lista.push({
             id: doc.id,
-            nomeFantasia: doc.data().nomeFantasia,
-            cnpj: doc.data().cnpj,
-            endereco: doc.data().endereco,
+            modelo: doc.data().modelo,
+            nome: doc.data().nome,
           })
         })
 
-        setClients(lista as any)
+        setEquipaments(lista as any)
       })
       .catch((error: any) => {
         console.log('DEU ALGUM ERRO!', error)
@@ -135,13 +131,13 @@ export function Clients() {
   }
 
   useEffect(() => {
-    loadCustomers()
+    loadEquipments()
   }, [])
 
   async function handleDelete(item: any) {
     await firebase
       .firestore()
-      .collection('customers')
+      .collection('equipment')
       .doc(item.id)
       .delete()
       .then(() => {
@@ -150,7 +146,7 @@ export function Clients() {
           type: 'success',
           description: 'Excluído com sucesso!',
         })
-        loadCustomers()
+        loadEquipments()
       })
   }
 
@@ -158,7 +154,7 @@ export function Clients() {
     addDialog({
       title: 'Excluir',
       type: 'danger',
-      description: 'Você tem certeza de que quer excluir esse cliente?',
+      description: 'Você tem certeza de que quer excluir esse equipamento?',
       actionText: 'Sim',
       cancelText: 'Não',
       onAction: () => handleDelete(item),
@@ -166,20 +162,20 @@ export function Clients() {
   }
 
   function handleCloseModal() {
-    setDataToUpdate({} as ClientProps)
-    setModalCreateClientVisible(false)
+    setDataToUpdate({} as EquipmentProps)
+    setModalCreateEquipmentVisible(false)
   }
 
   return (
     <>
-      <Modal open={modalCreateClientVisible} onOpenChange={handleCloseModal}>
+      <Modal open={modalCreateEquipmentVisible} onOpenChange={handleCloseModal}>
         <ModalContent
-          title={dataToUpdate.id ? 'Editar Cliente' : 'Novo Clinte'}
+          title={dataToUpdate.id ? 'Editar Equipamento' : 'Novo Equipamento'}
         >
           <Form
             ref={formRef}
             flex
-            onSubmit={handleCreateClient}
+            onSubmit={handleCreateEquipment}
             initialData={
               dataToUpdate.id
                 ? {
@@ -190,22 +186,15 @@ export function Clients() {
           >
             <Flex padding direction="column" gap>
               <TextInput
-                name="nomeFantasia"
-                label="Nome Fantasia"
-                placeholder="Nome Fantasia"
-              />
-
-              <MaskInput
-                name="cnpj"
-                label="CNPJ"
-                mask="cnpj"
-                placeholder="CNPJ"
+                name="modelo"
+                label="Modelo"
+                placeholder="Modelo do equipamento"
               />
 
               <TextInput
-                name="endereco"
-                label="Endereço"
-                placeholder="Endereço"
+                name="nome"
+                label="Nome"
+                placeholder="Nome do equipamento"
               />
             </Flex>
             <Footer>
@@ -222,35 +211,31 @@ export function Clients() {
 
       <Flex overflow flex gap padding direction="column">
         <Flex gap={8} align="center">
-          <UserCircle size={26} weight="bold" />
-          <Heading size="sm">Cadastro de Clientes</Heading>
+          <DeviceMobile size={26} weight="bold" />
+          <Heading size="sm">Cadastro de Equipamentos</Heading>
         </Flex>
 
         <DropdownSeparator />
 
         <Flex gap direction="column" overflow>
           <Flex>
-            <Button onClick={() => setModalCreateClientVisible(true)}>
-              Novo Cliente
+            <Button onClick={() => setModalCreateEquipmentVisible(true)}>
+              Novo Equipamento
             </Button>
           </Flex>
 
           <Flex overflow>
             <Card flex overflow padding>
               <Table
-                data={clients}
+                data={equipaments}
                 headers={[
                   {
-                    label: 'Empresa',
-                    dataIndex: 'nomeFantasia',
+                    label: 'Modelo',
+                    dataIndex: 'modelo',
                   },
                   {
-                    label: 'Endereço',
-                    dataIndex: 'endereco',
-                  },
-                  {
-                    label: 'CNPJ',
-                    dataIndex: 'cnpj',
+                    label: 'Nome',
+                    dataIndex: 'nome',
                   },
                 ]}
                 actions={[
@@ -258,7 +243,7 @@ export function Clients() {
                     label: 'Editar',
                     onClick: (item: any) => {
                       setDataToUpdate(item)
-                      setModalCreateClientVisible(true)
+                      setModalCreateEquipmentVisible(true)
                     },
                   },
                   {
