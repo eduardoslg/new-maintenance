@@ -9,15 +9,15 @@ import { AppRoutes } from './routes/AppRoutes'
 export function App() {
   return (
     <LoadingProvider>
-      <AuthProvider>
-        <Provider>
-          <DialogProvider>
-            <ToastProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <Provider>
+            <DialogProvider>
               <AppRoutes />
-            </ToastProvider>
-          </DialogProvider>
-        </Provider>
-      </AuthProvider>
+            </DialogProvider>
+          </Provider>
+        </AuthProvider>
+      </ToastProvider>
     </LoadingProvider>
   )
 }

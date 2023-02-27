@@ -2,6 +2,7 @@ import { createContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useLoading } from '@siakit/loading'
+import { useToast } from '@siakit/toast'
 
 import firebase from '../api/api'
 
@@ -30,6 +31,7 @@ export const AuthContext = createContext({} as AuthContextData)
 function AuthProvider({ children }: any) {
   const navigate = useNavigate()
   const { setLoading } = useLoading()
+  const { addToast } = useToast()
 
   const [user, setUser] = useState<User | undefined>(() => {
     const persistedUser = localStorage.getItem('@manutencao')
@@ -73,6 +75,13 @@ function AuthProvider({ children }: any) {
       navigate('/')
     } catch (err) {
       console.log(err)
+
+      addToast({
+        type: 'error',
+        title: 'Erro',
+        duration: 2000,
+        description: 'Usuário/senha inválidos.',
+      })
     } finally {
       setLoading(false)
     }
